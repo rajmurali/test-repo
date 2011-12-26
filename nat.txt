@@ -1,0 +1,102 @@
+Follow these steps to have your Windows XP to work as a NAT
+
+Requirements:
+1.To have two network cards: 
+1.NIC1: One connected to the internal network (any network not only 192.168.1.0).
+2.NIC2: The other one connected to the Internet (or other network you want to connect to)
+2.To have administrative access to stop/start some services.
+
+Steps:
+
+1. Disable ICS on both NICs. 
+Right-click on NIC -> Properties -> Advanced. Make sure Allow other network users to connect through this computer’s Internet connection is unchecked.
+
+2. Enable Routing and Remote Access Service. 
+Control Panel -> Administrative Tools -> Services. Enable Routing and Remote Access
+
+3. Disable Firewall/ICS Service (which might take precedence over step1.
+Control Panel -> Administrative Tools -> Services. Disable Windows Firewall/Internet Connection Sharing (ICS)
+
+4. Configure the NICs: 
+a) Only one should have a gateway (In my example is NIC2). Don't give any gateway on the other NIC (NIC1)
+
+b) Add the NAT configuration.
+- You still need to find out the name of your network cards. Here are presenting them as NIC1 and NIC2. In reality they could be something like “Local Area Connection”
+
+Run cmd. type the command netsh
+Now enter the following commands one by one.
+
+netsh>pushd routing ip nat
+
+netsh routing ip nat>uninstall
+
+netsh routing ip nat>install
+
+netsh routing ip nat>set global tcptimeoutmins=1440 udptimeoutmins=1 loglevel=ERROR
+
+netsh routing ip nat>add interface name="NIC2" mode=FULL
+
+netsh routing ip nat>add interface name="NIC1" mode=PRIVATE
+
+netsh routing ip nat>popd
+
+netsh>
+
+5. Configure the nat client computers.
+
+a) Gateway = NIC1's IP Address.
+b) DNS = ISP's DNS (DNS on NIC2)
+
+
+A tested EXAMPLE:-
+------------------
+netsh>pushd routing ip nat
+
+netsh routing ip nat>uninstall
+
+netsh routing ip nat>install
+
+netsh routing ip nat>set global tcptimeoutmins=1440 udptimeoutmins=1 loglevel=ERROR
+
+netsh routing ip nat>add interface name="Local Area Connection 3" mode=FULL
+
+netsh routing ip nat>add interface name="Local Area Connection" mode=PRIVATE
+
+netsh routing ip nat>popd
+
+netsh>
+
+
+ADDITIONAL INFO:-
+-----------------
+
+You can use NETSH to apply the whole NAT configuration simply by importing a file. 
+
+netsh -f NATcfg.txt
+
+NATcfg.txt contents follow.
+
+
+[code]
+# ----------------------------------
+# NAT configuration
+# ----------------------------------
+pushd routing ip nat
+uninstall
+install
+set global tcptimeoutmins=1440 udptimeoutmins=1 loglevel=ERROR
+
+#
+#NAT Configuration For Interface Local Area Connection
+#
+add interface name="NIC2" mode=FULL
+
+#
+#NAT Configuration For Interface Local Area Connection 2
+#
+add interface name="NIC1" mode=PRIVATE
+
+popd
+[/code]
+
+
